@@ -1,167 +1,58 @@
-# API acadêmica
+# Meta Restaurante
 
-API REST em Node.js, Express, TypeScript e Prisma para uma instituição de ensino superior. O recurso principal é o cadastro de cursos; as rotas de cursos exigem autenticação JWT e cada usuário acessa somente os cursos que cadastrou.
+Sistema web para gestão de usuários, eventos, turmas, estudantes e pesquisas de campo, com autenticação e controle de acesso.
 
-## Requisitos
+## Tecnologias
 
-- Node.js e npm
-- Docker Desktop com Docker Compose
-- PowerShell
+- Frontend: React, TypeScript e Vite
+- Backend: Node.js, Express, TypeScript e Prisma
+- Banco de dados: PostgreSQL
+- Ambiente local integrado: Docker Compose
 
-## Configuração e inicialização
+## Executar com Docker
 
-Execute os comandos a partir da pasta do projeto:
+Requisitos: Docker Desktop com o Docker Compose habilitado.
 
-```powershell
-cd "C:\caminho\para\lab-backend-2026"
-npm install
-```
-
-O arquivo `.env` não é versionado. Crie-o na raiz do projeto:
+Na raiz do projeto, execute:
 
 ```powershell
-@'
-PORT=3000
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/lab_backend_2026
-'@ | Set-Content -Encoding ascii .env
+docker compose up --build
 ```
 
-Suba o PostgreSQL e o pgAdmin:
+Na primeira inicialização, o Compose cria o banco, aplica as migrações e insere dados iniciais. A aplicação fica disponível em:
 
-```powershell
-docker compose up -d
-docker compose ps
-```
+- Frontend: http://localhost:5173
+- API: http://localhost:3000
+- Verificação da API: http://localhost:3000/health
 
-O PostgreSQL fica disponível em `localhost:5433`; o pgAdmin, em <http://localhost:8081>. O Compose usa um volume chamado `postgres_data` para persistir os dados.
+Para encerrar, use `Ctrl+C`. Para iniciar os serviços em segundo plano, use `docker compose up --build -d`; para encerrá-los, use `docker compose down`. Os dados do PostgreSQL permanecem no volume `postgres_data`. Para apagar também os dados, execute `docker compose down -v`.
 
-Gere o Prisma Client e aplique as migrações:
+## Acesso inicial
 
-```powershell
-npx prisma generate
-npx prisma migrate deploy
-```
+- E-mail: `admin@meta.com`
+- Senha: `admin123`
 
-Inicie a API em modo de desenvolvimento:
+Troque a senha inicial antes de disponibilizar o sistema em um ambiente acessível a outras pessoas. Para uso fora de desenvolvimento, configure um `JWT_SECRET` forte no arquivo `.env` da raiz.
 
-```powershell
-npm run dev
-```
+## Execução sem Docker
 
-A API fica em <http://localhost:3000>. Para compilar e executar a versão compilada:
+Requisitos: Node.js 20+ e PostgreSQL 14+.
+
+1. Crie o banco `meta_restaurante` e configure `backend/.env` com base em `backend/.env.example`.
+2. Instale as dependências na raiz com `npm run install:all`.
+3. Gere o Prisma Client e aplique as migrações: `npm run backend:setup`.
+4. Em terminais separados, execute `npm run backend:dev` e `npm run frontend:dev`.
+
+O backend usa `DATABASE_URL`, `JWT_SECRET`, `PORT` e `FRONTEND_URL`. O frontend usa `VITE_API_URL` (padrão: `http://localhost:3000`).
+
+## Verificações de compilação
 
 ```powershell
 npm run build
-npm start
 ```
 
-Confirme a resposta da API em outro terminal PowerShell:
+## Estrutura
 
-```powershell
-Invoke-RestMethod -Uri http://localhost:3000/api
-```
-
-## Cadastro e autenticação
-
-Crie um usuário. A senha deve ter pelo menos seis caracteres e é armazenada com hash:
-
-```powershell
-$usuario = @{
-  name = "Ana Silva"
-  email = "ana@example.com"
-  password = "senha123"
-} | ConvertTo-Json
-
-Invoke-RestMethod `
-  -Method Post `
-  -Uri http://localhost:3000/api/users `
-  -ContentType "application/json" `
-  -Body $usuario
-```
-
-Faça login e guarde o JWT retornado:
-
-```powershell
-$credenciais = @{
-  email = "ana@example.com"
-  password = "senha123"
-} | ConvertTo-Json
-
-$sessao = Invoke-RestMethod `
-  -Method Post `
-  -Uri http://localhost:3000/api/auth/login `
-  -ContentType "application/json" `
-  -Body $credenciais
-
-$token = $sessao.token
-$headers = @{ Authorization = "Bearer $token" }
-```
-
-Consulte o usuário autenticado:
-
-```powershell
-Invoke-RestMethod -Uri http://localhost:3000/api/auth/me -Headers $headers
-```
-
-As rotas de cursos respondem `401 Unauthorized` quando o cabeçalho `Authorization: Bearer <token>` está ausente ou inválido.
-
-## Cursos
-
-O corpo de criação aceita `name`, `description` (opcional) e `durationSemesters` (inteiro positivo). Todas as rotas abaixo exigem `$headers`:
-
-```powershell
-# Listar cursos do usuário autenticado
-Invoke-RestMethod -Uri http://localhost:3000/api/courses -Headers $headers
-
-# Criar curso
-$curso = @{
-  name = "Engenharia de Software"
-  description = "Curso de graduação"
-  durationSemesters = 8
-} | ConvertTo-Json
-
-$novoCurso = Invoke-RestMethod `
-  -Method Post `
-  -Uri http://localhost:3000/api/courses `
-  -Headers $headers `
-  -ContentType "application/json" `
-  -Body $curso
-
-# Consultar por ID
-$cursoId = $novoCurso.id
-Invoke-RestMethod -Uri "http://localhost:3000/api/courses/$cursoId" -Headers $headers
-
-# Atualizar parcialmente
-$alteracao = @{ durationSemesters = 9 } | ConvertTo-Json
-Invoke-RestMethod `
-  -Method Patch `
-  -Uri "http://localhost:3000/api/courses/$cursoId" `
-  -Headers $headers `
-  -ContentType "application/json" `
-  -Body $alteracao
-
-# Excluir
-Invoke-RestMethod `
-  -Method Delete `
-  -Uri "http://localhost:3000/api/courses/$cursoId" `
-  -Headers $headers
-```
-
-| Método | Rota | Ação |
-| --- | --- | --- |
-| `POST` | `/api/users` | Cadastrar usuário |
-| `POST` | `/api/auth/login` | Autenticar e obter JWT |
-| `GET` | `/api/auth/me` | Consultar usuário autenticado |
-| `GET` | `/api/courses` | Listar cursos próprios |
-| `POST` | `/api/courses` | Cadastrar curso |
-| `GET` | `/api/courses/:id` | Consultar curso próprio |
-| `PATCH` | `/api/courses/:id` | Atualizar curso próprio |
-| `DELETE` | `/api/courses/:id` | Excluir curso próprio |
-
-## Encerrar os containers
-
-```powershell
-docker compose down
-```
-
-Esse comando mantém o volume e os dados do banco. Para apagar também o banco local e todos os dados persistidos, use `docker compose down -v`.
+- `frontend/`: aplicação React
+- `backend/`: API, esquema Prisma, migrações e seed
+- `compose.yaml`: serviços de banco, API e frontend

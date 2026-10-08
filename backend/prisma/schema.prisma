@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PESQUISADOR
+}
+
+model User {
+  id        String         @id @default(uuid())
+  nome      String
+  email     String         @unique
+  senha     String
+  role      Role           @default(PESQUISADOR)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  pesquisas PesquisaCampo[]
+
+  @@map("users")
+}
+
+model Evento {
+  id          String          @id @default(uuid())
+  nome        String
+  descricao   String?
+  local       String?
+  dataInicio  DateTime?       @map("data_inicio")
+  dataFim     DateTime?       @map("data_fim")
+  ativo       Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  pesquisas   PesquisaCampo[]
+
+  @@map("eventos")
+}
+
+model Turma {
+  id          String      @id @default(uuid())
+  nome        String
+  anoEscolar  String?     @map("ano_escolar")
+  escola      String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  estudantes  Estudante[]
+
+  @@map("turmas")
+}
+
+model Estudante {
+  id              String          @id @default(uuid())
+  nome            String
+  idade           Int
+  profissaoFutura String          @map("profissao_futura")
+  turmaId         String          @map("turma_id")
+  turma           Turma           @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  pesquisas       PesquisaCampo[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([turmaId])
+  @@map("estudantes")
+}
+
+model PesquisaCampo {
+  id          String    @id @default(uuid())
+  usuarioId   String    @map("usuario_id")
+  usuario     User      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  eventoId    String    @map("evento_id")
+  evento      Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  estudanteId String    @map("estudante_id")
+  estudante   Estudante @relation(fields: [estudanteId], references: [id], onDelete: Cascade)
+  observacoes String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([eventoId, estudanteId])
+  @@index([usuarioId])
+  @@index([eventoId])
+  @@index([estudanteId])
+  @@map("pesquisas_campo")
+}

@@ -1,36 +1,17 @@
 {
-  "name": "lab-backend-2026",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "ts-node prisma/seed.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.2.0",
-    "prisma": "^6.12.0",
-    "tsx": "^4.23.12"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.12.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "ts-node": "^10.9.2",
-    "typescript": "^7.0.2",
-    "zod": "^4.6.5"
+  "name":"sistema-meta-restaurante",
+  "version":"1.1.0",
+  "private":true,
+  "scripts":{
+    "install:all":"npm install --prefix backend && npm install --prefix frontend",
+    "backend:dev":"npm run dev --prefix backend",
+    "backend:build":"npm run build --prefix backend",
+    "backend:db:check":"npm run db:check --prefix backend",
+    "backend:db:migrate":"npm run db:migrate --prefix backend",
+    "backend:db:seed":"npm run db:seed --prefix backend",
+    "backend:setup":"npm run setup --prefix backend",
+    "frontend:dev":"npm run dev --prefix frontend",
+    "frontend:build":"npm run build --prefix frontend",
+    "build":"npm run backend:build && npm run frontend:build"
   }
 }
