@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export type UserRole = "ADMIN" | "PESQUISADOR";
+export type UserRole = "ADMIN" | "ATENDENTE";
 
 export type JwtPayload = {
   id: string;

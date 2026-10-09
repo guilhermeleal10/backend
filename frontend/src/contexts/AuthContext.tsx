@@ -1,5 +1,5 @@
 import {createContext,useContext,useMemo,useState} from "react"; import api from "../services/api";
-type User={id:string;nome:string;email:string;role:"ADMIN"|"PESQUISADOR"}; type C={user:User|null;login:(e:string,s:string)=>Promise<void>;logout:()=>void};
+type User={id:string;nome:string;email:string;role:"ADMIN"|"ATENDENTE"}; type C={user:User|null;login:(e:string,s:string)=>Promise<void>;logout:()=>void};
 const AuthContext=createContext<C|null>(null);
 export function AuthProvider({children}:{children:React.ReactNode}){const [user,setUser]=useState<User|null>(()=>{const x=localStorage.getItem("monitoramento_user");return x?JSON.parse(x):null}); async function login(email:string,senha:string){const r=await api.post("/login",{email,senha});localStorage.setItem("monitoramento_token",r.data.token);localStorage.setItem("monitoramento_user",JSON.stringify(r.data.user));setUser(r.data.user)} function logout(){localStorage.clear();setUser(null);location.href="/login"} return <AuthContext.Provider value={useMemo(()=>({user,login,logout}),[user])}>{children}</AuthContext.Provider>}
 export function useAuth(){const x=useContext(AuthContext);if(!x)throw Error("AuthProvider ausente");return x}

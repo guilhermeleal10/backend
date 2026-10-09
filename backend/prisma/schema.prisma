@@ -9,78 +9,95 @@ datasource db {
 
 enum Role {
   ADMIN
-  PESQUISADOR
+  ATENDENTE
+}
+
+enum TableStatus {
+  DISPONIVEL
+  OCUPADA
+  RESERVADA
+}
+
+enum OrderStatus {
+  PENDENTE
+  PREPARANDO
+  PRONTO
+  ENTREGUE
 }
 
 model User {
-  id        String         @id @default(uuid())
-  nome      String
-  email     String         @unique
-  senha     String
-  role      Role           @default(PESQUISADOR)
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
-  pesquisas PesquisaCampo[]
-
+  id String @id @default(uuid())
+  nome String
+  email String @unique
+  senha String
+  role Role @default(ATENDENTE)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  pedidos Pedido[]
   @@map("users")
 }
 
-model Evento {
-  id          String          @id @default(uuid())
-  nome        String
-  descricao   String?
-  local       String?
-  dataInicio  DateTime?       @map("data_inicio")
-  dataFim     DateTime?       @map("data_fim")
-  ativo       Boolean         @default(true)
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
-  pesquisas   PesquisaCampo[]
-
-  @@map("eventos")
+model Prato {
+  id String @id @default(uuid())
+  nome String
+  descricao String?
+  categoria String?
+  preco Decimal @default(0) @db.Decimal(10, 2)
+  ativo Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  itens ItemPedido[]
+  @@map("pratos")
 }
 
-model Turma {
-  id          String      @id @default(uuid())
-  nome        String
-  anoEscolar  String?     @map("ano_escolar")
-  escola      String?
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  estudantes  Estudante[]
-
-  @@map("turmas")
+model Mesa {
+  id String @id @default(uuid())
+  nome String
+  lugares Int @default(2)
+  status TableStatus @default(DISPONIVEL)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  pedidos Pedido[]
+  @@map("mesas")
 }
 
-model Estudante {
-  id              String          @id @default(uuid())
-  nome            String
-  idade           Int
-  profissaoFutura String          @map("profissao_futura")
-  turmaId         String          @map("turma_id")
-  turma           Turma           @relation(fields: [turmaId], references: [id], onDelete: Cascade)
-  pesquisas       PesquisaCampo[]
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
-
-  @@index([turmaId])
-  @@map("estudantes")
+model Cliente {
+  id String @id @default(uuid())
+  nome String
+  telefone String?
+  email String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  pedidos Pedido[]
+  @@map("clientes")
 }
 
-model PesquisaCampo {
-  id          String    @id @default(uuid())
-  usuarioId   String    @map("usuario_id")
-  usuario     User      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  eventoId    String    @map("evento_id")
-  evento      Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
-  estudanteId String    @map("estudante_id")
-  estudante   Estudante @relation(fields: [estudanteId], references: [id], onDelete: Cascade)
+model Pedido {
+  id String @id @default(uuid())
+  clienteId String @map("cliente_id")
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  mesaId String? @map("mesa_id")
+  mesa Mesa? @relation(fields: [mesaId], references: [id], onDelete: SetNull)
+  usuarioId String @map("usuario_id")
+  usuario User @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  status OrderStatus @default(PENDENTE)
   observacoes String?
-  createdAt   DateTime  @default(now()) @map("created_at")
+  total Decimal @default(0) @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  itens ItemPedido[]
+  @@map("pedidos")
+}
 
-  @@unique([eventoId, estudanteId])
-  @@index([usuarioId])
-  @@index([eventoId])
-  @@index([estudanteId])
-  @@map("pesquisas_campo")
+model ItemPedido {
+  id String @id @default(uuid())
+  pedidoId String @map("pedido_id")
+  pedido Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  pratoId String @map("prato_id")
+  prato Prato @relation(fields: [pratoId], references: [id], onDelete: Restrict)
+  quantidade Int @default(1)
+  precoUnitario Decimal @map("preco_unitario") @db.Decimal(10, 2)
+  @@index([pedidoId])
+  @@index([pratoId])
+  @@map("itens_pedido")
 }

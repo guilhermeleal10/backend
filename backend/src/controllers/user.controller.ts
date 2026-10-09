@@ -7,7 +7,7 @@ const createSchema = z.object({
   nome: z.string().trim().min(1),
   email: z.string().email(),
   senha: z.string().min(6),
-  role: z.enum(["ADMIN", "PESQUISADOR"]).default("PESQUISADOR")
+  role: z.enum(["ADMIN", "ATENDENTE"]).default("ATENDENTE")
 });
 
 const updateSchema = createSchema.partial();
@@ -62,7 +62,7 @@ export class UserController {
       nome?: string;
       email?: string;
       senha?: string;
-      role?: "ADMIN" | "PESQUISADOR";
+      role?: "ADMIN" | "ATENDENTE";
     } = {};
 
     if (parsed.data.nome !== undefined) data.nome = parsed.data.nome;
